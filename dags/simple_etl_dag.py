@@ -1,26 +1,15 @@
 import os
-
 from functools import wraps
-
 import pandas as pd
-
 from airflow.models import DAG
 from airflow.utils.dates import days_ago
 from airflow.operators.python import PythonOperator,ShortCircuitOperator
-
 from dotenv import dotenv_values
 from sqlalchemy import create_engine, inspect
-
 from datetime import datetime
 
 # DECLARING Airflow DAG CONFIGURATION
-DAG_CONFIG = {
-    'depends_on_past': False,
-    'start_date': datetime(2023, 12, 20),
-    'email': ['michaeltekle1571@gmail.com'],
-    'email_on_failure': True,
-    'schedule_interval': '@daily',
-}
+
 
 
 args = {"owner": "Airflow", "start_date": days_ago(1)}
@@ -41,7 +30,7 @@ def logger(func):
     return wrapper
 
 
-DATASET_URL = "D:/tenacademy/new/Airflow/data/20181024_d1_0830_0900.csv"
+DATASET_URL = "D:/tenacademy/new/Airflow/data/data.csv"
 
 
 CONFIG = dotenv_values(".env")
@@ -66,26 +55,11 @@ def connect_db():
 
 
 @logger
-def extract_data(dataset_url):
-    print(f"Reading dataset from {dataset_url}")
-    df = pd.read_csv(dataset_url)
+def extract_data(DATASET_URL):
+    print(f"Reading dataset from {DATASET_URL}")
+    df = pd.read_csv(DATASET_URL)
     return df
 
-
-@logger
-def transform(df):
-    # transformation
-    print("Transforming data")
-    df_transform = df.copy()
-    winecolor_encoded = pd.get_dummies(df_transform["winecolor"], prefix="winecolor")
-    df_transform[winecolor_encoded.columns.to_list()] = winecolor_encoded
-    df_transform.drop("winecolor", axis=1, inplace=True)
-
-    for column in df_transform.columns:
-        df_transform[column] = (
-            df_transform[column] - df_transform[column].mean()
-        ) / df_transform[column].std()
-    return df
 
 @logger
 def check_table_exists(table_name, engine):
@@ -103,20 +77,20 @@ def load_to_db(df, table_name, engine):
 def tables_exists():
     db_engine = connect_db()
     print("Checking if tables exists")
-    check_table_exists("test_table", db_engine)
+    check_table_exists("df_trafic1", db_engine)
     db_engine.dispose()
 
 @logger
 def etl():
     db_engine = connect_db()
     raw_df = extract_data(DATASET_URL)
-    raw_table_name = "test_table"
+    raw_table_name = "df_trafic1"
     load_to_db(raw_df, raw_table_name, db_engine)
     db_engine.dispose()
 
 
 # DAG
-with DAG('RAW-DATA-EXTRACTOR-AND-LOADER', catchup=False, default_args=DAG_CONFIG) as dag:
+with DAG('RAW-DATA-EXTRACTOR-AND-LOADER', catchup=False, default_args=dag) as dag:
 
     checking_db_connection = ShortCircuitOperator(
         task_id='Connecting to DB',
