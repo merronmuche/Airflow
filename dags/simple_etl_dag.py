@@ -124,7 +124,7 @@ with DAG('RAW-DATA-EXTRACTOR-AND-LOADER', catchup=False, default_args=DAG_CONFIG
     )
 
     creating_db = ShortCircuitOperator(
-        task_id='Reading dataset from ',
+        task_id='Reading dataset',
         python_callable=extract_data
     )
 
