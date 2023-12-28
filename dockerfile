@@ -1,13 +1,9 @@
-FROM apache/airflow:2.2.3
-
-RUN pip install markupsafe==2.0.1 \
-	&& pip install apache-airflow-providers-odbc \
-	&& pip install pyodbc \
-	&& pip install apache-airflow-providers-microsoft-mssql \
-	&& pip install apache-airflow-providers-microsoft-mssql[odbc] \
-	&& pip install apache-airflow-providers-microsoft-azure \
-	&& pip install gitpython
-
-ADD requirements.txt /usr/local/airflow/requirements.txt
-RUN pip install --no-cache-dir -U pip setuptools wheel
-RUN pip install --no-cache-dir -r /usr/local/airflow/requirements.txt
+FROM python:3.10.9
+RUN pip install apache-airflow[postgres]==2.1.3
+RUN pip install dbt
+RUN pip install SQLAlchemy==1.3.23
+WORKDIR /project
+COPY requirements.txt /project/requirements.txt
+RUN pip install -r requirements.txt
+COPY . /project/
+CMD airflow scheduler & airflow webserver
